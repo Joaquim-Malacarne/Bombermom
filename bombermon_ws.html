@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>💣 BomberMon</title>
 <script src="engine.js"></script>
-<!-- WebSocket nativo — sem PeerJS -->
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 :root{
@@ -17,7 +16,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--b0)}
 body{font-family:'Press Start 2P',monospace;display:flex;align-items:center;justify-content:center;gap:10px;padding:8px}
 body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:998;
   background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.06) 3px,rgba(0,0,0,.06) 4px)}
-/* ── OVERLAY ── */
 #ov{position:fixed;inset:0;z-index:200;background:rgba(4,6,1,.96);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
 #ov.hidden{display:none}
@@ -32,12 +30,14 @@ input.gi{background:#000;border:2px solid var(--acc);color:var(--acc);
   font-family:'Press Start 2P',monospace;font-size:12px;padding:7px 10px;
   outline:none;width:100%;text-align:center;letter-spacing:3px;text-transform:uppercase}
 input.gi::placeholder{color:#1a2608;font-size:7px;letter-spacing:1px}
+input.gi.srv{font-size:8px;letter-spacing:1px;text-transform:none;border-color:var(--b5);color:var(--txt)}
 .btn{font-family:'Press Start 2P',monospace;font-size:8px;padding:8px 14px;
   border:none;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:transform .08s}
 .btn:active{transform:translate(2px,2px)}
 .by{background:var(--acc);color:#000;box-shadow:3px 3px 0 #5a3e00}.by:hover{background:#ffe060}
 .br{background:var(--red);color:#fff;box-shadow:3px 3px 0 #500}.br:hover{background:#d04040}
 .bb{background:var(--blue);color:#fff;box-shadow:3px 3px 0 #091030}.bb:hover{background:#2858b8}
+.bg{background:var(--b3);color:var(--txt);box-shadow:2px 2px 0 #000}.bg:hover{background:var(--b4)}
 .st{font-size:8px;color:var(--dim);text-align:center;min-height:14px}
 .st.ok{color:var(--b6)}.st.err{color:var(--red)}.st.w{color:var(--acc)}
 .rcode{font-size:24px;letter-spacing:7px;color:var(--b6);
@@ -46,8 +46,9 @@ input.gi::placeholder{color:#1a2608;font-size:7px;letter-spacing:1px}
   border:1px solid var(--b2);padding:5px 8px;width:100%;font-size:8px;color:var(--txt)}
 .pdot{width:9px;height:9px;border-radius:2px;flex-shrink:0;border:1px solid rgba(0,0,0,.5)}
 .hdiv{width:100%;border-top:1px solid var(--b2);margin:2px 0}
+.srv-row{display:flex;align-items:center;gap:6px;width:100%}
+.srv-lbl{font-size:6px;color:var(--dim);white-space:nowrap;flex-shrink:0}
 .gotitle{font-size:clamp(11px,1.7vw,18px);text-align:center;line-height:1.9;white-space:pre-line}
-/* ── SIDEBAR ── */
 #sb{display:flex;flex-direction:column;gap:8px;width:158px;flex-shrink:0}
 .sp{background:var(--b1);border:2px solid var(--b2);box-shadow:3px 3px 0 #000;padding:8px 9px}
 .spt{font-size:6px;letter-spacing:1px;color:var(--dim);margin-bottom:6px;
@@ -70,12 +71,19 @@ canvas.win{animation:win .8s ease-in-out infinite;border-color:var(--acc)}
 </head>
 <body>
 
-<!-- ══ OVERLAY ══════════════════════════════════════════════════ -->
 <div id="ov">
+  <!-- TELA PRINCIPAL -->
   <div class="scr on" id="sm">
     <div class="logo">💣 BOMBER<em>MON</em><br><em style="font-size:.45em;color:#5a7020">▸ P2P EDITION ◂</em></div>
     <div class="box">
       <input class="gi" id="inp-n" maxlength="12" placeholder="SEU NOME" />
+      <div class="hdiv"></div>
+      <!-- Campo de servidor configurável -->
+      <div class="srv-row">
+        <span class="srv-lbl">SERVIDOR</span>
+        <input class="gi srv" id="inp-srv" placeholder="localhost:8765" style="flex:1" />
+        <button class="btn bg" style="padding:6px 8px;font-size:6px" onclick="resetSrv()">↺</button>
+      </div>
       <div class="hdiv"></div>
       <button class="btn by" onclick="goHost()">▶ CRIAR SALA</button>
       <div style="font-size:7px;color:var(--dim)">── OU ──</div>
@@ -85,12 +93,17 @@ canvas.win{animation:win .8s ease-in-out infinite;border-color:var(--acc)}
     <div class="st" id="stm">▮ PRONTO</div>
   </div>
 
+  <!-- TELA SALA CRIADA (host) -->
   <div class="scr" id="sl">
     <div class="logo" style="font-size:clamp(9px,1.3vw,14px)">SALA CRIADA</div>
     <div class="box">
       <div style="font-size:7px;color:var(--dim)">CÓDIGO DA SALA</div>
       <div class="rcode" id="rctxt">----</div>
       <div style="font-size:7px;color:var(--dim)">Passe para o outro jogador</div>
+      <!-- Mostra o endereço para compartilhar -->
+      <div style="font-size:6px;color:var(--dim);text-align:center;margin-top:2px">
+        Link: <span id="share-link" style="color:var(--b5)"></span>
+      </div>
       <div class="hdiv"></div>
       <div id="lplist" style="width:100%;display:flex;flex-direction:column;gap:4px"></div>
       <div class="hdiv"></div>
@@ -99,11 +112,13 @@ canvas.win{animation:win .8s ease-in-out infinite;border-color:var(--acc)}
     </div>
   </div>
 
+  <!-- TELA CONECTANDO (guest) -->
   <div class="scr" id="sj">
     <div class="logo" style="font-size:clamp(9px,1.3vw,14px)">CONECTANDO<span style="animation:blink .7s step-end infinite">...</span></div>
     <div class="st w" id="stj">Buscando sala...</div>
   </div>
 
+  <!-- TELA GAME OVER -->
   <div class="scr" id="so">
     <div class="gotitle" id="otitle">FIM DE JOGO</div>
     <div class="box">
@@ -116,7 +131,7 @@ canvas.win{animation:win .8s ease-in-out infinite;border-color:var(--acc)}
   </div>
 </div>
 
-<!-- ══ SIDEBAR ══════════════════════════════════════════════════ -->
+<!-- SIDEBAR -->
 <div id="sb">
   <div class="sp">
     <div class="spt">TEMPO</div>
@@ -142,18 +157,46 @@ canvas.win{animation:win .8s ease-in-out infinite;border-color:var(--acc)}
   </div>
 </div>
 
-<!-- ══ CANVAS ═══════════════════════════════════════════════════ -->
 <canvas id="game" width="960" height="832"></canvas>
 
 <script>
 // ══════════════════════════════════════════════════════════════
-//  SPRITE DATA  —  16×16 pixel art (4px per pixel on 64px grid)
-//  Index 0 = transparent
+//  WS_URL — configurável via query string, localStorage ou fallback
+// ══════════════════════════════════════════════════════════════
+const DEFAULT_SRV = 'localhost:8765';
+const LS_KEY = 'bombermon_server';
+
+function getSrvInput() {
+  return document.getElementById('inp-srv').value.trim() || DEFAULT_SRV;
+}
+
+function buildWsUrl(host) {
+  // Se já tem protocolo (ws:// ou wss://) usa direto
+  if (host.startsWith('ws://') || host.startsWith('wss://')) return host;
+  // ngrok e domínios externos usam wss, localhost usa ws
+  const secure = !host.startsWith('localhost') && !host.match(/^127\./) && !host.match(/^192\.168\./);
+  return (secure ? 'wss://' : 'ws://') + host;
+}
+
+// Inicializa campo com ?server= ou localStorage ou default
+(function initSrvField() {
+  const params = new URLSearchParams(window.location.search);
+  const fromUrl  = params.get('server');
+  const fromStorage = localStorage.getItem(LS_KEY);
+  const val = fromUrl || fromStorage || DEFAULT_SRV;
+  document.getElementById('inp-srv').value = val;
+})();
+
+function resetSrv() {
+  document.getElementById('inp-srv').value = DEFAULT_SRV;
+  localStorage.removeItem(LS_KEY);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  SPRITE DATA
 // ══════════════════════════════════════════════════════════════
 const SPR = {};
 
-// ── Pikachu ────────────────────────────────────────────────────
-// Palette: 1=yellow #F8D000  2=dk-yellow #C09000  3=black  4=white  5=red #D03018  6=brown #703800
 SPR.pik = {
   pal:[null,'#F8D000','#C09000','#000000','#FFFFFF','#D03018','#703800'],
   px:[
@@ -175,8 +218,6 @@ SPR.pik = {
     0,0,0,0,0,3,3,3,3,3,3,0,0,0,0,0,
   ]
 };
-// ── Charmander ─────────────────────────────────────────────────
-// Palette: 1=orange #F07030  2=dk-orange #C04010  3=black  4=white  5=cream #F8E8A0  6=lt-orange #F8A060
 SPR.cha = {
   pal:[null,'#F07030','#C04010','#000000','#FFFFFF','#F8E8A0','#F8A060'],
   px:[
@@ -198,8 +239,6 @@ SPR.cha = {
     0,0,0,3,2,3,0,0,0,0,3,2,3,0,0,0,
   ]
 };
-// ── Squirtle ──────────────────────────────────────────────────
-// Palette: 1=blue #4090D8  2=dk-blue #286898  3=black  4=white  5=cream #F0E8C0  6=tan #A87040
 SPR.squ = {
   pal:[null,'#4090D8','#286898','#000000','#FFFFFF','#F0E8C0','#A87040'],
   px:[
@@ -221,8 +260,6 @@ SPR.squ = {
     0,0,0,3,2,3,0,0,0,0,3,2,3,0,0,0,
   ]
 };
-// ── Bulbasaur ─────────────────────────────────────────────────
-// Palette: 1=teal #60A060  2=dk-teal #306830  3=black  4=white  5=ltgreen #A8E0A0  6=bulb #3C8830
 SPR.bul = {
   pal:[null,'#60A060','#306830','#000000','#FFFFFF','#A8E0A0','#3C8830'],
   px:[
@@ -244,8 +281,6 @@ SPR.bul = {
     0,0,0,3,2,3,0,0,0,0,3,2,3,0,0,0,
   ]
 };
-// ── Rhydon ────────────────────────────────────────────────────
-// Palette: 1=gray #888898  2=dk-gray #585868  3=black  4=white  5=red #C03020  6=lt-gray #B0B0C0  7=dk #404050  8=horn #C8A050
 SPR.rhy = {
   pal:[null,'#888898','#585868','#000000','#FFFFFF','#C03020','#B0B0C0','#404050','#C8A050'],
   px:[
@@ -270,7 +305,6 @@ SPR.rhy = {
 
 const SPRITES = [SPR.pik, SPR.cha, SPR.squ, SPR.bul];
 
-// Prerender each sprite to an offscreen canvas for speed
 function prerender(spr, tint) {
   const oc = document.createElement('canvas'); oc.width = oc.height = 64;
   const ox = oc.getContext('2d');
@@ -286,13 +320,12 @@ function prerender(spr, tint) {
   return oc;
 }
 
-// Build prerendered cache per sprite × variant
-const SPRCC = {}; // normal
-const SPRCC_ME = {}; // mega-evolution recolor (brighter)
+const SPRCC = {};
+const SPRCC_ME = {};
 function initSprites() {
   [0,1,2,3].forEach(i => {
     SPRCC[i] = prerender(SPRITES[i], null);
-    SPRCC_ME[i] = prerender(SPRITES[i], [255,220,0,0.5]); // golden tint
+    SPRCC_ME[i] = prerender(SPRITES[i], [255,220,0,0.5]);
   });
 }
 
@@ -314,7 +347,6 @@ function mkWall() {
   x.fillStyle='#141e06'; x.fillRect(1,1,G-2,G-2);
   x.fillStyle='#1a2808'; x.fillRect(3,3,G-6,G-6);
   x.fillStyle='#101804'; x.fillRect(5,5,G-10,G-10);
-  // mortar grooves
   x.fillStyle='#080c02';
   [14,30,46].forEach(y=>x.fillRect(0,y,G,2));
   [18,36].forEach(xx=>x.fillRect(xx,0,2,G));
@@ -330,7 +362,7 @@ function mkSoft() {
   x.fillStyle='#3a2208';
   x.fillRect(2,2,G-4,18); x.fillRect(1,24,18,16); x.fillRect(23,24,40,16);
   x.fillRect(1,44,40,18); x.fillRect(45,44,18,18);
-  x.fillStyle='#4e3010'; // highlight edges
+  x.fillStyle='#4e3010';
   x.fillRect(2,2,G-4,3); x.fillRect(2,2,3,18);
   return c;
 }
@@ -344,7 +376,6 @@ const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
 let renderState = null;
-let prevPhase   = 'lobby';
 let myId        = null;
 
 function render() {
@@ -361,7 +392,6 @@ function render() {
   const s = renderState;
   const now = Date.now();
 
-  // ── Map ───────────────────────────────────────────────────
   for (let r=0; r<ENG.ROWS; r++) {
     for (let c=0; c<ENG.COLS; c++) {
       if (!s.cells[r]) continue;
@@ -383,22 +413,12 @@ function render() {
     }
   }
 
-  // ── Power-ups ─────────────────────────────────────────────
   s.powerups?.forEach(pu => drawPU(pu, now));
-
-  // ── Explosions ────────────────────────────────────────────
   s.explosions?.forEach(e => drawExp(e, now));
-
-  // ── Bombs ─────────────────────────────────────────────────
   s.bombs?.forEach(b => drawBomb(b, now));
-
-  // ── Players ───────────────────────────────────────────────
   s.players?.forEach(p => drawPlayer(p, now));
-
-  // ── Rhydon ────────────────────────────────────────────────
   if (s.rhydon) drawRhydon(s.rhydon, now);
 
-  // ── HUD overlays ──────────────────────────────────────────
   if (s.timer <= ENG.SHRINK_START && s.timer > 0) {
     ctx.save(); ctx.globalAlpha=0.35+0.2*Math.sin(now/220);
     ctx.fillStyle='#aa0000';
@@ -420,12 +440,9 @@ function render() {
   }
 }
 
-// ── Draw helpers ─────────────────────────────────────────────
-
 function drawPlayer(p, now) {
   if (!p.alive && (!p.respawnT || p.respawnT <= 0)) return;
   const ghost = !p.alive && p.respawnT > 0;
-  // Invincibility flash
   if ((p.invT > 0 || p.isIV) && Math.floor(now/100)%2===0) return;
   const scale = p.isME ? 1.25 : 1.0;
   const x = (p.c + 0.5)*G, y = (p.r + 0.5)*G;
@@ -435,7 +452,6 @@ function drawPlayer(p, now) {
   if (ghost)         ctx.globalAlpha = 0.28 + 0.18*Math.sin(now/210);
   if (p.isCloaked)   ctx.globalAlpha = 0.25 + 0.08*Math.sin(now/180);
 
-  // Status auras
   if (p.hasMS && !ghost) {
     ctx.save(); ctx.globalAlpha=0.5+0.2*Math.sin(now/160);
     ctx.strokeStyle='#4488ff'; ctx.lineWidth=4;
@@ -449,16 +465,13 @@ function drawPlayer(p, now) {
     ctx.restore();
   }
 
-  // Shadow
   ctx.save(); ctx.globalAlpha*=0.35;
   ctx.fillStyle='#000'; ctx.beginPath(); ctx.ellipse(x,y+sz*0.42,sz*0.35,sz*0.1,0,0,Math.PI*2); ctx.fill();
   ctx.restore();
 
-  // Sprite (prerendered)
   const sprImg = p.isME ? SPRCC_ME[p.si] : SPRCC[p.si];
   if (sprImg) ctx.drawImage(sprImg, x-sz/2, y-sz/2, sz, sz);
 
-  // Charmander flame animation (sprite index 1)
   if (p.si===1 && !ghost) {
     const fl=Math.sin(now/160)*5;
     ctx.save(); ctx.globalAlpha=ctx.globalAlpha||1;
@@ -466,7 +479,6 @@ function drawPlayer(p, now) {
     ctx.restore();
   }
 
-  // Name tag
   ctx.save(); ctx.globalAlpha=1;
   ctx.font='7px "Press Start 2P"'; ctx.textAlign='center';
   const nm=(p.name||'?').substring(0,7);
@@ -475,7 +487,6 @@ function drawPlayer(p, now) {
   ctx.fillStyle=p.color; ctx.fillText(nm,x,y-sz/2-9);
   ctx.restore();
 
-  // Lives hearts
   ctx.save(); ctx.globalAlpha=1;
   ctx.font='11px serif'; ctx.textAlign='center';
   const hc=Math.min(p.lives,5);
@@ -489,7 +500,6 @@ function drawPlayer(p, now) {
 }
 
 function drawFlame(ctx, x, y, r) {
-  // Simple animated flame using rects — GBC style
   const t=Date.now();
   const flicker=[0,2,-2,1,-1][Math.floor(t/100)%5];
   ctx.fillStyle='#FF4400';
@@ -507,19 +517,16 @@ function drawBomb(b, now) {
   const cols={normal:['#111','#ff5500'],skull:['#220028','#cc00ee'],mega:['#001838','#0066ff']};
   const [bc,gc]=cols[b.type]||cols.normal;
 
-  // Glow
   ctx.save(); ctx.globalAlpha=0.2;
   const gg=ctx.createRadialGradient(x,y,0,x,y,R*2.2);
   gg.addColorStop(0,gc); gg.addColorStop(1,'transparent');
   ctx.fillStyle=gg; ctx.beginPath(); ctx.arc(x,y,R*2.2,0,Math.PI*2); ctx.fill();
   ctx.restore();
 
-  // Body (pixel-ish)
   ctx.fillStyle='#000'; ctx.fillRect(x-R,y-R,R*2,R*2);
   ctx.fillStyle=bc;     ctx.fillRect(x-R+2,y-R+2,R*2-4,R*2-4);
   ctx.fillStyle='rgba(255,255,255,.15)'; ctx.fillRect(x-R+2,y-R+2,R-2,R*0.6);
 
-  // Remote ring
   if (b.remote) {
     ctx.save(); ctx.strokeStyle='#00ccff'; ctx.lineWidth=2;
     const dash=Math.floor(now/80)%2;
@@ -528,7 +535,6 @@ function drawBomb(b, now) {
     ctx.restore();
   }
 
-  // Fuse
   const fy=pulse?-G*0.12:0;
   const fc=b.type==='skull'?'#cc00ee':b.type==='mega'?'#0066ff':'#cc8800';
   ctx.strokeStyle=fc; ctx.lineWidth=4;
@@ -592,15 +598,12 @@ function drawRhydon(rh, now) {
   const sz=G;
   const bob=rh.frame?2:-2;
 
-  // Shadow
   ctx.save(); ctx.globalAlpha=0.35;
   ctx.fillStyle='#000'; ctx.beginPath(); ctx.ellipse(x,y+sz*0.42,sz*0.38,sz*0.1,0,0,Math.PI*2); ctx.fill();
   ctx.restore();
 
-  // Draw sprite — Rhydon is bigger so scale 1.1
   ctx.drawImage(prerender(SPR.rhy, null), x-sz*0.55, y-sz*0.55+bob, sz*1.1, sz*1.1);
 
-  // Chase indicator
   if (rh.state==='chase') {
     ctx.save(); ctx.globalAlpha=0.5+0.3*Math.sin(now/180);
     ctx.strokeStyle='#cc0000'; ctx.lineWidth=2;
@@ -608,7 +611,6 @@ function drawRhydon(rh, now) {
     ctx.restore();
   }
 
-  // HP bar
   const bw=G*0.9, bh=6;
   const bx=x-bw/2, by=y-sz*0.65-10;
   ctx.fillStyle='#000'; ctx.fillRect(bx-1,by-1,bw+2,bh+2);
@@ -641,26 +643,30 @@ function applyState(s) {
 }
 
 // ══════════════════════════════════════════════════════════════
-//  NETWORKING  —  WebSocket nativo (sem PeerJS)
-//  Servidor: server.py  →  ws://localhost:9001
+//  NETWORKING
 // ══════════════════════════════════════════════════════════════
-const WS_URL = 'ws://localhost:8765';
-
 let isHost    = false;
-let ws        = null;        // WebSocket nativo do browser
+let ws        = null;
 let engine    = null;
 let tickH     = null;
 let roomCode  = null;
-let _guestName = 'Guest';   // host armazena o nome do guest aqui
+let _guestName = 'Guest';
 
-// ── Cria sala (host) ──────────────────────────────────────────
+function _makeWs() {
+  const srv = getSrvInput();
+  // Salva no localStorage para próxima vez
+  if (srv !== DEFAULT_SRV) localStorage.setItem(LS_KEY, srv);
+  else localStorage.removeItem(LS_KEY);
+  return new WebSocket(buildWsUrl(srv));
+}
+
 function goHost() {
   const name = (document.getElementById('inp-n').value.trim() || 'Host').slice(0, 12);
   setSt('stm', 'Criando sala...', 'w');
   isHost = true;
   myId   = 0;
 
-  ws = new WebSocket(WS_URL);
+  ws = _makeWs();
 
   ws.onopen = () => {
     ws.send(JSON.stringify({ type: 'CREATE', name }));
@@ -669,13 +675,12 @@ function goHost() {
     let msg; try { msg = JSON.parse(e.data); } catch { return; }
     _handleMsg(msg);
   };
-  ws.onerror = () => setSt('stm', 'Erro ao conectar ao servidor.', 'err');
-  ws.onclose = () => {
-    if (renderState?.phase === 'playing') setSt('stm', 'Conexão encerrada.', 'err');
+  ws.onerror = () => setSt('stm', 'Erro ao conectar. Verifique o endereço do servidor.', 'err');
+  ws.onclose = (e) => {
+    if (renderState?.phase === 'playing') _showDisconnect('Conexão com o servidor encerrada.');
   };
 }
 
-// ── Entra na sala (guest) ─────────────────────────────────────
 function goJoin() {
   const name = (document.getElementById('inp-n').value.trim() || 'Guest').slice(0, 12);
   const code = document.getElementById('inp-r').value.trim().toUpperCase();
@@ -687,7 +692,7 @@ function goJoin() {
   showScr('sj');
   setSt('stj', 'Conectando ao servidor...', 'w');
 
-  ws = new WebSocket(WS_URL);
+  ws = _makeWs();
 
   ws.onopen = () => {
     ws.send(JSON.stringify({ type: 'JOIN', code, name }));
@@ -696,19 +701,22 @@ function goJoin() {
     let msg; try { msg = JSON.parse(e.data); } catch { return; }
     _handleMsg(msg);
   };
-  ws.onerror = () => setSt('stj', 'Erro ao conectar ao servidor.', 'err');
+  ws.onerror = () => setSt('stj', 'Erro ao conectar. Verifique o endereço do servidor.', 'err');
   ws.onclose = () => {
-    if (renderState?.phase === 'playing') setSt('stm', 'Conexão encerrada.', 'err');
+    if (renderState?.phase === 'playing') _showDisconnect('Conexão com o servidor encerrada.');
   };
 }
 
-// ── Roteador central de mensagens recebidas ───────────────────
 function _handleMsg(msg) {
   if (isHost) {
     if (msg.type === 'CREATED') {
       roomCode = msg.code;
       const hostName = document.getElementById('inp-n').value.trim() || 'Host';
       document.getElementById('rctxt').textContent = roomCode;
+      // Mostra link compartilhável
+      const srv = getSrvInput();
+      const shareUrl = `${location.href.split('?')[0]}?server=${encodeURIComponent(srv)}`;
+      document.getElementById('share-link').textContent = srv;
       showScr('sl');
       updateLobby([{ id: 0, name: hostName, color: COLORS[0] }]);
       setSt('stl', 'Aguardando jogador...', 'w');
@@ -729,7 +737,7 @@ function _handleMsg(msg) {
       if (result === 'restarted' || result === 'voted') _broadcastState();
 
     } else if (msg.type === 'DISCONNECT') {
-      setSt('stm', 'Guest desconectou.', 'err');
+      _showDisconnect('O outro jogador desconectou.');
     }
 
   } else {
@@ -743,12 +751,27 @@ function _handleMsg(msg) {
       setSt('stj', msg.msg || 'Erro.', 'err');
 
     } else if (msg.type === 'DISCONNECT') {
-      setSt('stm', 'Host desconectou.', 'err');
+      _showDisconnect('O host desconectou.');
     }
   }
 }
 
-// ── Host inicia o jogo ────────────────────────────────────────
+// ── Mostra overlay de desconexão sem precisar recarregar ──────
+function _showDisconnect(msg) {
+  if (tickH) { clearInterval(tickH); tickH = null; }
+  const ov = document.getElementById('ov');
+  const so = document.getElementById('so');
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
+  document.getElementById('otitle').textContent = '⚠ DESCONECTADO';
+  document.getElementById('otitle').style.color = '#cc4444';
+  document.getElementById('oplist').innerHTML =
+    `<div class="pentry" style="justify-content:center;color:#cc8888">${msg}</div>`;
+  document.getElementById('stvote').textContent = '';
+  document.getElementById('brst').style.display = 'none';
+  so.classList.add('on');
+  ov.classList.remove('hidden');
+}
+
 function hostStart() {
   if (!isHost) return;
   const hostName = document.getElementById('inp-n').value.trim() || 'Host';
@@ -773,14 +796,12 @@ function hostStart() {
   _broadcastState();
 }
 
-// ── Serializa e envia estado; aplica localmente no host ───────
 function _broadcastState() {
   const s = engine.snap();
   applyState(s);
   if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(s));
 }
 
-// ── Input: host aplica direto; guest envia pro servidor ───────
 function sendInput(data) {
   if (isHost) {
     const result = engine?.input(myId, data);
@@ -806,7 +827,6 @@ document.addEventListener('keydown',e=>{
 });
 document.addEventListener('keyup',e=>{ held[e.code]=false; });
 
-// Poll movement (engine debounces via moveDelay)
 setInterval(()=>{
   if(renderState?.phase!=='playing') return;
   if(held['ArrowUp'])    sendInput({t:'M',d:'U'});
@@ -865,6 +885,7 @@ function showOver(s) {
   document.getElementById('stvote').textContent='';
   document.getElementById('brst').textContent='↺ JOGAR DE NOVO';
   document.getElementById('brst').disabled=false;
+  document.getElementById('brst').style.display='';
   showScr('so');
 }
 
@@ -908,8 +929,9 @@ function updateSidebar(s) {
 // ══════════════════════════════════════════════════════════════
 //  BOOT
 // ══════════════════════════════════════════════════════════════
-document.getElementById('inp-n').addEventListener('keydown',e=>{ if(e.key==='Enter')goHost(); });
+document.getElementById('inp-n').addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('inp-r').value ? goJoin() : goHost(); });
 document.getElementById('inp-r').addEventListener('keydown',e=>{ if(e.key==='Enter')goJoin(); });
+document.getElementById('inp-srv').addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('inp-n').focus(); });
 
 initSprites();
 showScr('sm');
