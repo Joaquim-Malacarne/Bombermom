@@ -379,7 +379,8 @@ bombermon/
 ├── server.py               ← servidor WebSocket + SQLite
 ├── bombermon.db            ← banco de dados (gerado automaticamente)
 ├── CLAUDE.md               ← referência técnica do projeto
-├── README.md               ← este arquivo
+├── README.md               ← documentação
+├── regras e fluxo          ← regras e fluxos do jogo
 │
 ├── client/
 │   ├── js/
@@ -419,11 +420,11 @@ bombermon/
 
 Desenvolvido como trabalho prático da disciplina de **Sistemas Distribuídos**.
 
-João Pedro Thomaz Kairalla dos Santos
-Miguel Mussalam Silva  
-Thiago Danilow de Araujo
-Joaquim Luis Malacarne Lima de Oliveira
-Manuella Nascimento Santos
+João Pedro Thomaz Kairalla dos Santos  
+Miguel Mussalam Silva    
+Thiago Danilow de Araujo  
+Joaquim Luis Malacarne Lima de Oliveira  
+Manuella Nascimento Santos  
 
 ---
 
