@@ -419,11 +419,11 @@ bombermon/
 
 Desenvolvido como trabalho prático da disciplina de **Sistemas Distribuídos**.
 
-João Pedro Thomaz Kairalla dos Santos
-Miguel Mussalam Silva  
-Thiago Danilow de Araujo
-Joaquim Luis Malacarne Lima de Oliveira
-Manuella Nascimento Santos
+João Pedro Thomaz Kairalla dos Santos  
+Miguel Mussalam Silva    
+Thiago Danilow de Araujo  
+Joaquim Luis Malacarne Lima de Oliveira  
+Manuella Nascimento Santos  
 
 ---
 
