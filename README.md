@@ -48,20 +48,20 @@ O sistema é composto por três nós distintos: um **servidor de relay** central
 O BomberMon adota uma arquitetura **host-relay-guest**, onde a lógica do jogo é executada inteiramente no cliente host (modelo peer-authoritative), e o servidor atua apenas como intermediário de mensagens.
 
 ```
-┌─────────────────────────────────────────────────────────┐
+┌──────────────────────────────────────────────────────────┐
 │                    SISTEMA DISTRIBUÍDO                   │
 │                                                          │
-│   ┌─────────────┐      ┌─────────────┐      ┌─────────┐ │
-│   │    HOST     │      │  SERVIDOR   │      │  GUEST  │ │
-│   │  (Browser)  │◄────►│  (Python)   │◄────►│(Browser)│ │
-│   │             │      │             │      │         │ │
+│   ┌─────────────┐      ┌─────────────┐      ┌──────────┐ │
+│   │    HOST     │      │  SERVIDOR   │      │  GUEST   │ │
+│   │  (Browser)  │◄────►│  (Python)   │◄────►│(Browser) │ │
+│   │             │      │             │      │          │ │
 │   │ GameEngine  │      │ Relay puro  │      │applyState│ │
-│   │ tick() 20/s │      │ SQLite DB   │      │Renderer │ │
-│   │ Renderer    │      │ WebSocket   │      │Input    │ │
-│   └─────────────┘      └─────────────┘      └─────────┘ │
+│   │ tick() 20/s │      │ SQLite DB   │      │Renderer  │ │
+│   │ Renderer    │      │ WebSocket   │      │Input     │ │
+│   └─────────────┘      └─────────────┘      └──────────┘ │
 │                                                          │
-│   ◄── wss:// (TLS) ──►         ◄── wss:// (TLS) ──►    │
-└─────────────────────────────────────────────────────────┘
+│   ◄── wss:// (TLS) ──►         ◄── wss:// (TLS) ──►      │
+└──────────────────────────────────────────────────────────┘
 ```
 
 ### Modelo de Consistência
@@ -418,6 +418,12 @@ bombermon/
 ## 👥 Autores
 
 Desenvolvido como trabalho prático da disciplina de **Sistemas Distribuídos**.
+
+João Pedro Thomaz Kairalla dos Santos
+Miguel Mussalam Silva  
+Thiago Danilow de Araujo
+Joaquim Luis Malacarne Lima de Oliveira
+Manuella Nascimento Santos
 
 ---
 
