@@ -392,12 +392,9 @@ bombermon/
 │   └── assets/             ← sons e recursos futuros
 │
 ├── diagramas/
-│   ├── bombermon_arquitetura.svg
-│   ├── bombermon_ciclo_engine.svg
-│   └── bombermon_sequencia_mensagens.svg
-│
-└── docs/
-    └── documentacao.md
+    ├── bombermon_arquitetura.svg
+    ├── bombermon_ciclo_engine.svg
+    └── bombermon_sequencia_mensagens.svg
 ```
 
 ---
