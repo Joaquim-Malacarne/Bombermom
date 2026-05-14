@@ -1,0 +1,20 @@
+rodar server.py
+
+abrir index.html(host)
+
+abrir outro terminal e rodar 
+
+py -m http.server 3000
+
+rodar ipconfig, pegar ipv4
+
+abrir no navegador (jogadores)
+http://(seu ipv4):3000
+
+exemplo:
+http://192.168.15.56:3000
+
+ngrok http 8765
+
+colar frenzy-federal-immodest.ngrok-free.dev no servidor, tanto do host
+quanto dos outros jogadores

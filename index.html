@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>💣 BomberMon</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+:root{
+  --b0:#080c02;--b1:#0e1604;--b2:#1a2806;--b3:#2c4010;
+  --b4:#486818;--b5:#7aaa28;--b6:#9bbc0f;--acc:#d4a820;
+  --red:#b82020;--blue:#1a3888;--dim:#2a4010;--txt:#b0cc80;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--b0)}
+body{font-family:'Press Start 2P',monospace;display:flex;align-items:center;justify-content:center;gap:10px;padding:8px}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:998;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.06) 3px,rgba(0,0,0,.06) 4px)}
+#ov{position:fixed;inset:0;z-index:200;background:rgba(4,6,1,.96);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+#ov.hidden{display:none}
+.scr{display:none;flex-direction:column;align-items:center;gap:10px}
+.scr.on{display:flex}
+.logo{font-size:clamp(12px,2vw,20px);color:var(--acc);line-height:2.2;text-align:center;letter-spacing:2px;
+  text-shadow:3px 3px 0 #5a3e00,0 0 16px rgba(212,168,32,.3)}
+.logo em{color:var(--b6);font-style:normal}
+.box{background:var(--b1);border:3px solid var(--b2);box-shadow:4px 4px 0 #000;
+  padding:14px 18px;display:flex;flex-direction:column;gap:8px;align-items:center;min-width:256px}
+input.gi{background:#000;border:2px solid var(--acc);color:var(--acc);
+  font-family:'Press Start 2P',monospace;font-size:12px;padding:7px 10px;
+  outline:none;width:100%;text-align:center;letter-spacing:3px;text-transform:uppercase}
+input.gi::placeholder{color:#1a2608;font-size:7px;letter-spacing:1px}
+input.gi.srv{font-size:8px;letter-spacing:1px;text-transform:none;border-color:var(--b5);color:var(--txt)}
+.btn{font-family:'Press Start 2P',monospace;font-size:8px;padding:8px 14px;
+  border:none;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:transform .08s}
+.btn:active{transform:translate(2px,2px)}
+.by{background:var(--acc);color:#000;box-shadow:3px 3px 0 #5a3e00}.by:hover{background:#ffe060}
+.br{background:var(--red);color:#fff;box-shadow:3px 3px 0 #500}.br:hover{background:#d04040}
+.bb{background:var(--blue);color:#fff;box-shadow:3px 3px 0 #091030}.bb:hover{background:#2858b8}
+.bg{background:var(--b3);color:var(--txt);box-shadow:2px 2px 0 #000}.bg:hover{background:var(--b4)}
+.st{font-size:8px;color:var(--dim);text-align:center;min-height:14px}
+.st.ok{color:var(--b6)}.st.err{color:var(--red)}.st.w{color:var(--acc)}
+.rcode{font-size:24px;letter-spacing:7px;color:var(--b6);
+  text-shadow:0 0 10px rgba(155,188,15,.5),3px 3px 0 #283808}
+.pentry{display:flex;align-items:center;gap:7px;background:#000;
+  border:1px solid var(--b2);padding:5px 8px;width:100%;font-size:8px;color:var(--txt)}
+.pdot{width:9px;height:9px;border-radius:2px;flex-shrink:0;border:1px solid rgba(0,0,0,.5)}
+.hdiv{width:100%;border-top:1px solid var(--b2);margin:2px 0}
+.srv-row{display:flex;align-items:center;gap:6px;width:100%}
+.srv-lbl{font-size:6px;color:var(--dim);white-space:nowrap;flex-shrink:0}
+.gotitle{font-size:clamp(11px,1.7vw,18px);text-align:center;line-height:1.9;white-space:pre-line}
+#sb{display:flex;flex-direction:column;gap:8px;width:158px;flex-shrink:0}
+.sp{background:var(--b1);border:2px solid var(--b2);box-shadow:3px 3px 0 #000;padding:8px 9px}
+.spt{font-size:6px;letter-spacing:1px;color:var(--dim);margin-bottom:6px;
+  padding-bottom:5px;border-bottom:1px solid var(--b2)}
+#tmr{font-size:20px;text-align:center;color:var(--b6);letter-spacing:2px;
+  text-shadow:2px 2px 0 #283808}
+#tmr.d{color:var(--red);animation:blink .45s step-end infinite alternate}
+#sw{font-size:7px;text-align:center;color:var(--red);margin-top:3px;min-height:11px;
+  animation:blink .5s step-end infinite alternate}
+@keyframes blink{to{opacity:.25}}
+.sbr{display:flex;align-items:center;gap:5px;margin-bottom:5px;font-size:7px;flex-wrap:wrap}
+.sbr.dead{opacity:.3}
+.sph{font-size:9px;margin-left:auto;color:#c03040;letter-spacing:0}
+#pul{font-size:7px;color:var(--b5);line-height:2.1;min-height:12px}
+canvas{display:block;image-rendering:pixelated;border:3px solid var(--b3);box-shadow:5px 5px 0 #000}
+@keyframes win{0%,100%{box-shadow:5px 5px 0 #000,0 0 24px rgba(212,168,32,.2)}
+  50%{box-shadow:5px 5px 0 #000,0 0 48px rgba(212,168,32,.6)}}
+canvas.win{animation:win .8s ease-in-out infinite;border-color:var(--acc)}
+</style>
+</head>
+<body>
+
+<div id="ov">
+  <!-- TELA PRINCIPAL -->
+  <div class="scr on" id="sm">
+    <div class="logo">💣 BOMBER<em>MON</em><br><em style="font-size:.45em;color:#5a7020">▸ P2P EDITION ◂</em></div>
+    <div class="box">
+      <input class="gi" id="inp-n" maxlength="12" placeholder="SEU NOME" />
+      <div class="hdiv"></div>
+      <div class="srv-row">
+        <span class="srv-lbl">SERVIDOR</span>
+        <input class="gi srv" id="inp-srv" placeholder="localhost:8765" style="flex:1" />
+        <button class="btn bg" style="padding:6px 8px;font-size:6px" onclick="resetSrv()">↺</button>
+      </div>
+      <div class="hdiv"></div>
+      <button class="btn by" onclick="goHost()">▶ CRIAR SALA</button>
+      <div style="font-size:7px;color:var(--dim)">── OU ──</div>
+      <input class="gi" id="inp-r" maxlength="4" placeholder="CÓDIGO DA SALA" />
+      <button class="btn bb" onclick="goJoin()">⤷ ENTRAR</button>
+    </div>
+    <div class="st" id="stm">▮ PRONTO</div>
+  </div>
+
+  <!-- TELA SALA CRIADA (host) -->
+  <div class="scr" id="sl">
+    <div class="logo" style="font-size:clamp(9px,1.3vw,14px)">SALA CRIADA</div>
+    <div class="box">
+      <div style="font-size:7px;color:var(--dim)">CÓDIGO DA SALA</div>
+      <div class="rcode" id="rctxt">----</div>
+      <div style="font-size:7px;color:var(--dim)">Passe para o outro jogador</div>
+      <div style="font-size:6px;color:var(--dim);text-align:center;margin-top:2px">
+        Link: <span id="share-link" style="color:var(--b5)"></span>
+      </div>
+      <div class="hdiv"></div>
+      <div id="lplist" style="width:100%;display:flex;flex-direction:column;gap:4px"></div>
+      <div class="hdiv"></div>
+      <div class="st w" id="stl">Aguardando jogador...</div>
+      <button class="btn by" id="bstart" onclick="hostStart()" style="display:none">▶ INICIAR JOGO</button>
+    </div>
+  </div>
+
+  <!-- TELA CONECTANDO (guest) -->
+  <div class="scr" id="sj">
+    <div class="logo" style="font-size:clamp(9px,1.3vw,14px)">CONECTANDO<span style="animation:blink .7s step-end infinite">...</span></div>
+    <div class="st w" id="stj">Buscando sala...</div>
+  </div>
+
+  <!-- TELA GAME OVER -->
+  <div class="scr" id="so">
+    <div class="gotitle" id="otitle">FIM DE JOGO</div>
+    <div class="box">
+      <div id="oplist" style="width:100%;display:flex;flex-direction:column;gap:4px"></div>
+      <div class="hdiv"></div>
+      <div class="st w" id="stvote" style="min-height:14px"></div>
+      <button class="btn by" id="brst" onclick="voteRestart()">↺ JOGAR DE NOVO</button>
+      <button class="btn br" onclick="location.reload()">✕ SAIR</button>
+    </div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div id="sb">
+  <div class="sp">
+    <div class="spt">TEMPO</div>
+    <div id="tmr">3:00</div>
+    <div id="sw"></div>
+  </div>
+  <div class="sp">
+    <div class="spt">JOGADORES</div>
+    <div id="sbp"></div>
+  </div>
+  <div class="sp">
+    <div class="spt">MEUS ITEMS</div>
+    <div id="pul">—</div>
+  </div>
+  <div class="sp">
+    <div class="spt">TECLAS</div>
+    <div style="font-size:6px;color:var(--dim);line-height:2.4">
+      <span style="color:var(--b6)">↑↓←→</span> mover<br>
+      <span style="color:var(--b6)">SPACE</span> bomba<br>
+      <span style="color:var(--b6)">X</span> detonar remote<br>
+      <span style="color:var(--b6)">T</span> thunder wave
+    </div>
+  </div>
+</div>
+
+<canvas id="game" width="960" height="832"></canvas>
+
+<!-- Módulos JS (ordem importa) -->
+<script src="client/js/engine.js"></script>
+<script src="client/js/sprites.js"></script>
+<script src="client/js/renderer.js"></script>
+<script src="client/js/ui.js"></script>
+<script src="client/js/network.js"></script>
+<script src="client/js/main.js"></script>
+
+</body>
+</html>
