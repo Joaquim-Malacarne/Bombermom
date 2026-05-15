@@ -111,8 +111,19 @@ class WSClient:
 
     # ── Handshake HTTP → WebSocket ────────────────────────────
     def handshake(self) -> bool:
+        # Lê até encontrar o fim dos headers HTTP (\r\n\r\n).
+        # Um único recv() não garante receber o request completo,
+        # especialmente via ngrok que adiciona headers de forwarding.
         try:
-            raw = self.sock.recv(4096).decode("utf-8", errors="ignore")
+            buf = b""
+            while b"\r\n\r\n" not in buf:
+                chunk = self.sock.recv(4096)
+                if not chunk:
+                    return False
+                buf += chunk
+                if len(buf) > 65536:  # proteção contra requests malformados
+                    return False
+            raw = buf.decode("utf-8", errors="ignore")
         except OSError:
             return False
 

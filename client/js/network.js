@@ -15,10 +15,12 @@ function getSrvInput() {
 
 function buildWsUrl(host) {
   if (host.startsWith('ws://') || host.startsWith('wss://')) return host;
-  const secure = !host.startsWith('localhost') &&
-                 !host.match(/^127\./) &&
-                 !host.match(/^192\.168\./);
-  return (secure ? 'wss://' : 'ws://') + host;
+  const isPrivate = host.startsWith('localhost') ||
+                    host.match(/^127\./) ||
+                    host.match(/^10\./) ||
+                    host.match(/^192\.168\./) ||
+                    host.match(/^172\.(1[6-9]|2\d|3[01])\./);
+  return (isPrivate ? 'ws://' : 'wss://') + host;
 }
 
 function resetSrv() {
